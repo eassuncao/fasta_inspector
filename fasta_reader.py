@@ -255,27 +255,3 @@ def count_sequences(filepath: str) -> int:
         >>> print(f"Found {count} sequences")
     """
     return sum(1 for _ in read_fasta(filepath))
-
-
-if __name__ == "__main__":
-    # Simple test/demonstration
-    import sys
-    
-    # Default test file if no arguments provided
-    if len(sys.argv) == 1:
-        test_file = "test_mixed.fasta"  # Default file for VS Code Run button
-        print(f"No file specified, using default: {test_file}\n")
-    else:
-        test_file = sys.argv[1]
-    
-    try:
-        print(f"Reading FASTA file: {test_file}\n")
-        for i, (header, sequence) in enumerate(read_fasta(test_file), 1):
-            print(f"Sequence {i}:")
-            print(f"  Header: {header}")
-            print(f"  Length: {len(sequence)}")
-            print(f"  Preview: {sequence[:50]}{'...' if len(sequence) > 50 else ''}")
-            print()
-    except (FileNotFoundError, FastaFormatError) as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
