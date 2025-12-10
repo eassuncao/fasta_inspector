@@ -38,8 +38,17 @@ def is_header_line(line: str) -> bool:
         
     Returns:
         bool: True if this line should be treated as a header
+        
+    Example:
+        >>> is_header_line('>seq1 description')
+        True
+        >>> is_header_line('ATCGATCGATCG')
+        False
+        >>> is_header_line('sp|P12345|PROTEIN_NAME')
+        True
     """
-    if not line:
+    # Validate input
+    if not line or not isinstance(line, str):
         return False
     
     # Standard FASTA header starts with '>'
@@ -199,18 +208,24 @@ def validate_fasta_file(filepath: str) -> bool:
     """
     Validate that a file is a properly formatted FASTA file.
     
+    This function attempts to parse the file and returns True if at least
+    one valid sequence is found. It catches all exceptions and returns False
+    for any invalid files.
+    
     Args:
         filepath (str): Path to the file to validate
         
     Returns:
-        bool: True if the file is valid, False otherwise
+        bool: True if the file is valid and contains at least one sequence,
+              False otherwise
         
     Example:
         >>> if validate_fasta_file('sequences.fasta'):
         ...     print("File is valid")
+        ...     # Proceed with processing
     """
     try:
-        # Try to read all sequences
+        # Try to read all sequences - if this succeeds, file is valid
         count = sum(1 for _ in read_fasta(filepath))
         return count > 0
     except (FileNotFoundError, FastaFormatError, IOError):
@@ -221,6 +236,10 @@ def count_sequences(filepath: str) -> int:
     """
     Count the number of sequences in a FASTA file.
     
+    This function parses the entire file to count sequences. For faster
+    counting on large files (without validation), consider using
+    utils.count_sequences_quick() instead.
+    
     Args:
         filepath (str): Path to the FASTA file
         
@@ -230,6 +249,10 @@ def count_sequences(filepath: str) -> int:
     Raises:
         FileNotFoundError: If the file does not exist
         FastaFormatError: If the file format is invalid
+        
+    Example:
+        >>> count = count_sequences('sequences.fasta')
+        >>> print(f"Found {count} sequences")
     """
     return sum(1 for _ in read_fasta(filepath))
 

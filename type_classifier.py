@@ -67,8 +67,9 @@ def detect_sequence_type(seq: str) -> str:
         >>> detect_sequence_type('atcg')  # Case-insensitive
         'DNA'
     """
-    if not seq:
-        raise SequenceClassificationError("Empty sequence provided")
+    # Validate input
+    if not seq or not isinstance(seq, str):
+        raise SequenceClassificationError("Empty or invalid sequence provided")
     
     # Convert to uppercase for case-insensitive comparison
     seq_upper = seq.upper()
@@ -116,13 +117,21 @@ def get_sequence_statistics(seq: str) -> dict:
             - 'valid_chars': Number of alphabetic characters
             - 'dna_chars': Number of DNA alphabet characters
             - 'dna_proportion': Proportion of DNA characters (0.0 to 1.0)
-            - 'classification': The detected sequence type
+            - 'classification': The detected sequence type ('DNA' or 'PROTEIN')
             
     Raises:
         SequenceClassificationError: If the sequence has no valid characters
+        
+    Example:
+        >>> stats = get_sequence_statistics('ATCGATCG')
+        >>> stats['classification']
+        'DNA'
+        >>> stats['dna_proportion']
+        1.0
     """
-    if not seq:
-        raise SequenceClassificationError("Empty sequence provided")
+    # Validate input
+    if not seq or not isinstance(seq, str):
+        raise SequenceClassificationError("Empty or invalid sequence provided")
     
     seq_upper = seq.upper()
     valid_chars = [char for char in seq_upper if char.isalpha()]
@@ -149,13 +158,25 @@ def classify_fasta_sequences(
     fasta_data: List[Tuple[str, str]]
 ) -> List[Tuple[str, str, str]]:
     """
-    Classify multiple FASTA sequences.
+    Classify multiple FASTA sequences in batch.
+    
+    This function processes a list of (header, sequence) tuples and returns
+    the classification for each sequence. If classification fails for any
+    sequence, the error message is included in the result.
     
     Args:
         fasta_data (List[Tuple[str, str]]): List of (header, sequence) tuples
         
     Returns:
         List[Tuple[str, str, str]]: List of (header, sequence, type) tuples
+                                     where type is 'DNA', 'PROTEIN', or
+                                     'ERROR: <message>' for failed classifications
+        
+    Example:
+        >>> data = [('seq1', 'ATCG'), ('seq2', 'MKLV')]
+        >>> results = classify_fasta_sequences(data)
+        >>> len(results)
+        2
     """
     results = []
     for header, sequence in fasta_data:
@@ -163,6 +184,7 @@ def classify_fasta_sequences(
             seq_type = detect_sequence_type(sequence)
             results.append((header, sequence, seq_type))
         except SequenceClassificationError as e:
+            # Include error message in result for debugging
             results.append((header, sequence, f"ERROR: {str(e)}"))
     return results
 

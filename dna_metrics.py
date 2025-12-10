@@ -19,12 +19,17 @@ def _clean_sequence(seq: str) -> str:
     Remove whitespace and newlines from a sequence.
     
     Helper function used by all metric functions to normalize input.
+    Ensures consistent processing across all DNA metrics calculations.
     
     Args:
         seq (str): DNA/RNA sequence that may contain whitespace or newlines
         
     Returns:
         str: Cleaned sequence with only alphabetic characters (uppercase)
+        
+    Example:
+        >>> _clean_sequence('ATCG \\n ATCG')
+        'ATCGATCG'
     """
     # Filter out whitespace and convert to uppercase for consistent processing
     return ''.join(char.upper() for char in seq if char.isalpha())
@@ -189,7 +194,7 @@ def get_base_counts(seq: str) -> dict:
             - 'C': Cytosine count
             - 'G': Guanine count
             - 'N': Ambiguous base count
-            - 'other': Count of other IUPAC ambiguity codes
+            - 'other': Count of other IUPAC ambiguity codes (R,Y,S,W,K,M,B,D,H,V)
             - 'total': Total sequence length
             
     Example:
@@ -200,7 +205,7 @@ def get_base_counts(seq: str) -> dict:
     """
     cleaned = _clean_sequence(seq)
     
-    # Initialize counts
+    # Initialize counts for all base types
     counts = {
         'A': 0,
         'T': 0,  # T includes U (uracil) for RNA sequences

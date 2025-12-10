@@ -48,7 +48,7 @@ def safe_div(numerator: Union[int, float], denominator: Union[int, float]) -> fl
     
     Returns 0.0 if the denominator is zero, avoiding ZeroDivisionError.
     Useful for calculating ratios and percentages where division by zero
-    is a valid edge case.
+    is a valid edge case that should return a sensible default.
     
     Args:
         numerator (int or float): The dividend
@@ -74,6 +74,9 @@ def format_large_number(num: Union[int, float], decimals: int = 2) -> str:
     """
     Format large numbers with comma separators for readability.
     
+    Integers are formatted with comma thousands separators. Floats are
+    formatted with the specified number of decimal places.
+    
     Args:
         num (int or float): Number to format
         decimals (int): Number of decimal places for floats (default: 2)
@@ -86,6 +89,8 @@ def format_large_number(num: Union[int, float], decimals: int = 2) -> str:
         '1,234,567'
         >>> format_large_number(1234.5678, decimals=2)
         '1,234.57'
+        >>> format_large_number(999.9, decimals=0)
+        '1,000'
     """
     if isinstance(num, float):
         return f"{num:,.{decimals}f}"
@@ -142,7 +147,7 @@ def calculate_percentage(part: Union[int, float], total: Union[int, float],
     Calculate percentage with safe division.
     
     Returns 0.0 if total is zero (same zero-division handling as safe_div).
-    Useful for composition analysis.
+    Useful for composition analysis and statistical calculations.
     
     Args:
         part (int or float): The part/subset value
@@ -150,15 +155,17 @@ def calculate_percentage(part: Union[int, float], total: Union[int, float],
         decimals (int): Number of decimal places to round to (default: 2)
         
     Returns:
-        float: Percentage value (0.0 to 100.0)
+        float: Percentage value (0.0 to 100.0), or 0.0 if total is zero
         
     Example:
         >>> calculate_percentage(25, 100)
         25.0
         >>> calculate_percentage(1, 3)
         33.33
-        >>> calculate_percentage(10, 0)
+        >>> calculate_percentage(10, 0)  # Safe division by zero
         0.0
+        >>> calculate_percentage(2, 3, decimals=4)
+        66.6667
     """
     if total == 0:
         return 0.0
@@ -170,20 +177,28 @@ def is_valid_sequence(seq: str, alphabet: set) -> bool:
     """
     Check if a sequence contains only characters from a specified alphabet.
     
+    Useful for validating sequences against a known set of valid characters
+    (e.g., DNA alphabet, protein alphabet). The check is case-insensitive
+    and ignores whitespace.
+    
     Args:
         seq (str): Sequence to validate
         alphabet (set): Set of valid characters (case-insensitive)
         
     Returns:
-        bool: True if all characters are in alphabet, False otherwise
+        bool: True if all characters are in alphabet, False otherwise or if
+              sequence is empty after cleaning
         
     Example:
         >>> is_valid_sequence('ATCG', {'A', 'T', 'C', 'G'})
         True
         >>> is_valid_sequence('ATCGX', {'A', 'T', 'C', 'G'})
         False
+        >>> is_valid_sequence('atcg', {'A', 'T', 'C', 'G'})  # Case-insensitive
+        True
     """
     cleaned = clean_sequence(seq)
+    # Return False for empty sequences
     if not cleaned:
         return False
     return all(char in alphabet for char in cleaned)
@@ -227,20 +242,29 @@ def get_file_size_mb(filepath: str) -> float:
     """
     Get file size in megabytes.
     
+    Useful for checking file size before processing large files or
+    displaying file information to users.
+    
     Args:
         filepath (str): Path to the file
         
     Returns:
-        float: File size in MB, or 0.0 if file doesn't exist
+        float: File size in MB, or 0.0 if file doesn't exist or is not accessible
         
     Example:
         >>> get_file_size_mb('large_file.fasta')
         15.23
+        >>> get_file_size_mb('nonexistent.txt')
+        0.0
     """
     if not os.path.isfile(filepath):
         return 0.0
-    size_bytes = os.path.getsize(filepath)
-    return size_bytes / (1024 * 1024)
+    try:
+        size_bytes = os.path.getsize(filepath)
+        return size_bytes / (1024 * 1024)
+    except (OSError, IOError):
+        # Return 0.0 if file size cannot be determined
+        return 0.0
 
 
 def count_sequences_quick(filepath: str, header_char: str = '>') -> int:
@@ -250,17 +274,21 @@ def count_sequences_quick(filepath: str, header_char: str = '>') -> int:
     This is faster than parsing the entire file when you only need the count.
     Note: Only counts lines that start with header_char (default '>'). Will NOT
     detect sequences whose headers do not begin with this character.
+    For files with non-standard headers, use fasta_reader.count_sequences() instead.
     
     Args:
         filepath (str): Path to the FASTA file
         header_char (str): Character that starts header lines (default: '>')
         
     Returns:
-        int: Number of sequences (header lines) in the file
+        int: Number of sequences (header lines) in the file, or 0 if file
+             is not accessible or cannot be read
         
     Example:
         >>> count_sequences_quick('sequences.fasta')
         42
+        >>> count_sequences_quick('empty.fasta')
+        0
     """
     if not validate_file_path(filepath):
         return 0
@@ -273,6 +301,7 @@ def count_sequences_quick(filepath: str, header_char: str = '>') -> int:
                 if line.strip().startswith(header_char):
                     count += 1
     except (IOError, UnicodeDecodeError):
+        # Return 0 if file cannot be read
         return 0
     
     return count

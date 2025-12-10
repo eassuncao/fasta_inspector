@@ -55,12 +55,17 @@ def _clean_sequence(seq: str) -> str:
     Remove whitespace and newlines from a sequence.
     
     Helper function used by all metric functions to normalize input.
+    Ensures consistent processing across all protein metrics calculations.
     
     Args:
         seq (str): Protein sequence that may contain whitespace or newlines
         
     Returns:
         str: Cleaned sequence with only alphabetic characters (uppercase)
+        
+    Example:
+        >>> _clean_sequence('MKLT \\n VVGA')
+        'MKLTVVGA'
     """
     # Filter out whitespace and convert to uppercase for consistent processing
     return ''.join(char.upper() for char in seq if char.isalpha())
@@ -101,7 +106,7 @@ def amino_acid_composition(seq: str) -> Dict[str, int]:
     
     Returns a dictionary with counts for each of the 20 standard amino acids
     present in the sequence. Only uppercase amino acids are counted after
-    cleaning the sequence.
+    cleaning the sequence. Non-standard amino acids are ignored.
     
     Args:
         seq (str): Protein sequence (whitespace is ignored)
@@ -109,6 +114,7 @@ def amino_acid_composition(seq: str) -> Dict[str, int]:
     Returns:
         dict: Dictionary mapping amino acid one-letter codes to their counts.
               Only amino acids present in the sequence are included.
+              Only the 20 standard amino acids (A,R,N,D,C,E,Q,G,H,I,L,K,M,F,P,S,T,W,Y,V) are counted.
               
     Raises:
         ProteinMetricsError: If sequence is empty or contains no valid amino acids
@@ -127,7 +133,7 @@ def amino_acid_composition(seq: str) -> Dict[str, int]:
     # Initialize composition dictionary (only for amino acids that appear)
     composition: Dict[str, int] = {}
     
-    # Count each amino acid
+    # Count each amino acid (only standard 20)
     for aa in cleaned:
         if aa in STANDARD_AMINO_ACIDS:
             composition[aa] = composition.get(aa, 0) + 1
@@ -147,12 +153,13 @@ def molecular_weight(seq: str) -> float:
     
     Computes the approximate molecular weight in Daltons (Da) based on the
     sum of average isotopic masses of constituent amino acids. The calculation
-    accounts for peptide bond formation (loss of water molecules).
+    accounts for peptide bond formation (loss of water molecules between residues).
     
     Formula: MW = sum(amino_acid_weights) + 18.015 (for terminal H and OH)
     
     Note: This is an approximation. Actual molecular weight may vary due to
     post-translational modifications, disulfide bonds, or prosthetic groups.
+    Only the 20 standard amino acids contribute to the weight calculation.
     
     Args:
         seq (str): Protein sequence (whitespace is ignored)
@@ -162,6 +169,7 @@ def molecular_weight(seq: str) -> float:
         
     Raises:
         ProteinMetricsError: If sequence is empty or contains no valid amino acids
+                            from the standard 20
         
     Example:
         >>> molecular_weight('AAA')  # 3 alanines
@@ -236,12 +244,14 @@ def get_amino_acid_percentage(seq: str) -> Dict[str, float]:
     Calculate the percentage of each amino acid in the sequence.
     
     Helper function that provides composition as percentages rather than counts.
+    Useful for comparing sequences of different lengths.
     
     Args:
         seq (str): Protein sequence (whitespace is ignored)
         
     Returns:
-        dict: Dictionary mapping amino acid codes to their percentage (0-100)
+        dict: Dictionary mapping amino acid codes to their percentage (0.0-100.0)
+              Only amino acids present in the sequence are included.
         
     Raises:
         ProteinMetricsError: If sequence is empty or invalid
@@ -249,11 +259,13 @@ def get_amino_acid_percentage(seq: str) -> Dict[str, float]:
     Example:
         >>> get_amino_acid_percentage('AAAGGG')
         {'A': 50.0, 'G': 50.0}
+        >>> get_amino_acid_percentage('AAA')
+        {'A': 100.0}
     """
     composition = amino_acid_composition(seq)
     seq_length = length(seq)
     
-    # Calculate percentages
+    # Calculate percentages for each amino acid
     percentages = {
         aa: (count / seq_length) * 100.0
         for aa, count in composition.items()
