@@ -50,7 +50,7 @@ The project includes test datasets representing diverse biological sequences:
 python main.py
 ```
 
-The program will prompt you to enter the path to a FASTA file. Alternatively, run with a file argument:
+The program will run with test_mixed.fasta by default. Alternatively, run with a file argument:
 
 ```bash
 python main.py path/to/your/file.fasta

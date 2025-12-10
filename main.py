@@ -32,6 +32,7 @@ If no file is specified, defaults to 'test_mixed.fasta' in the current directory
 
 import sys
 import os
+import time
 from typing import Tuple
 
 # Import project modules
@@ -166,7 +167,7 @@ def analyze_protein_sequence(sequence: str, seq_id: int, header: str) -> None:
         print()
 
 
-def analyze_fasta_file(filepath: str) -> Tuple[int, int, int]:
+def analyze_fasta_file(filepath: str) -> Tuple[int, int, int, int, int]:
     """
     Analyze all sequences in a FASTA file.
     
@@ -179,11 +180,13 @@ def analyze_fasta_file(filepath: str) -> Tuple[int, int, int]:
         filepath (str): Path to the FASTA file
         
     Returns:
-        tuple: (total_sequences, dna_count, protein_count)
+        tuple: (total_sequences, dna_count, protein_count, total_bases, total_residues)
     """
     total_sequences = 0
     dna_count = 0
     protein_count = 0
+    total_bases = 0
+    total_residues = 0
     
     try:
         for seq_id, (header, sequence) in enumerate(read_fasta(filepath), 1):
@@ -197,9 +200,11 @@ def analyze_fasta_file(filepath: str) -> Tuple[int, int, int]:
                 if seq_type == 'DNA':
                     analyze_dna_sequence(sequence, seq_id, header)
                     dna_count += 1
+                    total_bases += dna_length(sequence)
                 elif seq_type == 'PROTEIN':
                     analyze_protein_sequence(sequence, seq_id, header)
                     protein_count += 1
+                    total_residues += protein_length(sequence)
                 else:
                     print(f"\nSequence #{seq_id}: UNKNOWN TYPE")
                     print_separator()
@@ -216,15 +221,15 @@ def analyze_fasta_file(filepath: str) -> Tuple[int, int, int]:
                 
     except FastaFormatError as e:
         print(f"\nFASTA Format Error: {e}")
-        return total_sequences, dna_count, protein_count
+        return total_sequences, dna_count, protein_count, total_bases, total_residues
     except FileNotFoundError as e:
         print(f"\nFile Error: {e}")
-        return total_sequences, dna_count, protein_count
+        return total_sequences, dna_count, protein_count, total_bases, total_residues
     except Exception as e:
         print(f"\nUnexpected Error: {e}")
-        return total_sequences, dna_count, protein_count
+        return total_sequences, dna_count, protein_count, total_bases, total_residues
     
-    return total_sequences, dna_count, protein_count
+    return total_sequences, dna_count, protein_count, total_bases, total_residues
 
 
 def print_summary(total: int, dna: int, protein: int):
@@ -265,6 +270,8 @@ def main():
     information (name and size), calls analyze_fasta_file to process all
     sequences, and prints a summary of the results.
     """
+    start_time = time.perf_counter()
+    
     print_header()
     
     # Determine input file
@@ -289,7 +296,19 @@ def main():
     print()
     
     # Analyze the file
-    total, dna, protein = analyze_fasta_file(fasta_file)
+    total, dna, protein, total_bases, total_residues = analyze_fasta_file(fasta_file)
+    
+    # Print benchmarking results
+    end_time = time.perf_counter()
+    elapsed = end_time - start_time
+    
+    print(f"\nProcessed {total} sequences in {elapsed:.2f} seconds")
+    rate = total / elapsed if elapsed > 0 else 0
+    print(f"≈ {rate:,.0f} sequences/second")
+    
+    print(f"\nTotal DNA bases processed: {total_bases:,}")
+    print(f"Total protein residues processed: {total_residues:,}")
+    print()
     
     # Print summary
     if total > 0:
