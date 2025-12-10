@@ -19,6 +19,69 @@ class FastaFormatError(Exception):
     pass
 
 
+def is_header_line(line: str) -> bool:
+    """
+    Determine if a line should be treated as a FASTA header.
+    
+    Returns True if:
+    1. Line starts with '>' (standard FASTA header), OR
+    2. Line appears to be a header-like metadata line (fallback detection)
+    
+    Fallback rule: A line is a header if it doesn't look like sequence data.
+    Sequence data is typically:
+    - Longer stretches of characters (>60 chars typically)
+    - Contains mostly biological sequence characters
+    - Lacks formatting characters like |, :, [, ], spaces in structured patterns
+    
+    Args:
+        line (str): The line to check (should already be stripped)
+        
+    Returns:
+        bool: True if this line should be treated as a header
+    """
+    if not line:
+        return False
+    
+    # Standard FASTA header starts with '>'
+    if line.startswith('>'):
+        return True
+    
+    # Fallback detection for non-standard headers
+    # Check for common header formatting patterns
+    header_indicators = ['|', ':', '[', ']', 'sp|', 'tr|', 'gb|', 'ref|', 
+                        'pdb|', 'GenBank', 'UniProt', 'Accession', 'lcl|']
+    if any(indicator in line for indicator in header_indicators):
+        return True
+    
+    # Count alphabetic characters
+    alpha_chars = [c for c in line.upper() if c.isalpha()]
+    if not alpha_chars:
+        # Line has no alphabetic characters - likely a header (e.g., numeric IDs)
+        return True
+    
+    # Define sequence character sets
+    # DNA/RNA bases including ambiguity codes
+    dna_chars = set('ACGTUNRYSWKMBDHV')
+    # Standard 20 amino acids
+    protein_chars = set('ACDEFGHIKLMNPQRSTVWY')
+    # Combined sequence alphabet
+    sequence_chars = dna_chars | protein_chars
+    
+    # Count how many characters are valid sequence characters
+    seq_char_count = sum(1 for c in alpha_chars if c in sequence_chars)
+    
+    # Calculate proportion of sequence characters
+    if len(alpha_chars) > 0:
+        seq_proportion = seq_char_count / len(alpha_chars)
+        
+        # If >85% of alphabetic chars are sequence chars, it's likely sequence data
+        if seq_proportion > 0.85:
+            return False
+    
+    # Otherwise, treat as a header (likely metadata, accession ID, etc.)
+    return True
+
+
 def read_fasta(filepath: str) -> Generator[Tuple[str, str], None, None]:
     """
     Read and parse a FASTA format file.
@@ -70,8 +133,8 @@ def read_fasta(filepath: str) -> Generator[Tuple[str, str], None, None]:
                 
                 has_content = True
                 
-                # Header line (starts with '>')
-                if line.startswith('>'):
+                # Check if this line is a header (either standard '>' or fallback detection)
+                if is_header_line(line):
                     # If we have a previous sequence, yield it
                     if current_header is not None:
                         # Join all sequence lines and validate
@@ -84,7 +147,12 @@ def read_fasta(filepath: str) -> Generator[Tuple[str, str], None, None]:
                         yield (current_header, sequence)
                     
                     # Start new sequence
-                    current_header = line[1:].strip()  # Remove '>' and strip whitespace
+                    # Remove '>' if present, otherwise use the line as-is
+                    if line.startswith('>'):
+                        current_header = line[1:].strip()
+                    else:
+                        current_header = line.strip()
+                    
                     if not current_header:
                         raise FastaFormatError(
                             f"Empty header at line {line_number}"
