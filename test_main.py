@@ -12,34 +12,40 @@ class TestAnalyzeFastaFile:
     """Tests for analyze_fasta_file function."""
     
     def test_analyze_test_mixed_fasta(self):
-        total, dna, protein = analyze_fasta_file("test_mixed.fasta")
+        total, dna, protein, total_bases, total_residues = analyze_fasta_file("test_mixed.fasta")
         
         # Based on current behavior
         assert total == 13
         assert dna == 4
         assert protein == 9
+        assert total_bases > 0
+        assert total_residues > 0
     
     def test_analyze_returns_tuple(self):
         result = analyze_fasta_file("test_mixed.fasta")
         
         assert isinstance(result, tuple)
-        assert len(result) == 3
+        assert len(result) == 5
         
-        total, dna, protein = result
+        total, dna, protein, total_bases, total_residues = result
         assert isinstance(total, int)
         assert isinstance(dna, int)
         assert isinstance(protein, int)
+        assert isinstance(total_bases, int)
+        assert isinstance(total_residues, int)
     
     def test_analyze_nonexistent_file(self):
         # Should handle error gracefully and return zeros
-        total, dna, protein = analyze_fasta_file("nonexistent_xyz.fasta")
+        total, dna, protein, total_bases, total_residues = analyze_fasta_file("nonexistent_xyz.fasta")
         
         assert total == 0
         assert dna == 0
         assert protein == 0
+        assert total_bases == 0
+        assert total_residues == 0
     
     def test_analyze_counts_add_up(self):
-        total, dna, protein = analyze_fasta_file("test_mixed.fasta")
+        total, dna, protein, total_bases, total_residues = analyze_fasta_file("test_mixed.fasta")
         
         # DNA + protein should equal or be less than total
         # (could be less if there are unclassified sequences)
@@ -100,13 +106,15 @@ class TestIntegrationWithRealFile:
     
     def test_full_analysis_workflow(self):
         # Run the full analysis
-        total, dna, protein = analyze_fasta_file("test_mixed.fasta")
+        total, dna, protein, total_bases, total_residues = analyze_fasta_file("test_mixed.fasta")
         
         # Verify counts
         assert total > 0
         assert dna > 0
         assert protein > 0
         assert dna + protein == total  # No unclassified in test_mixed.fasta
+        assert total_bases > 0
+        assert total_residues > 0
     
     def test_analysis_consistent_with_file(self):
         from fasta_reader import count_sequences
@@ -115,7 +123,7 @@ class TestIntegrationWithRealFile:
         file_count = count_sequences("test_mixed.fasta")
         
         # Count using analyze_fasta_file
-        total, _, _ = analyze_fasta_file("test_mixed.fasta")
+        total, _, _, _, _ = analyze_fasta_file("test_mixed.fasta")
         
         # Should match
         assert total == file_count
@@ -137,7 +145,7 @@ class TestIntegrationWithRealFile:
                 manual_protein += 1
         
         # Compare with analyze_fasta_file results
-        total, dna, protein = analyze_fasta_file("test_mixed.fasta")
+        total, dna, protein, total_bases, total_residues = analyze_fasta_file("test_mixed.fasta")
         
         assert dna == manual_dna
         assert protein == manual_protein
