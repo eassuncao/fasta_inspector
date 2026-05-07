@@ -1,5 +1,3 @@
-# AI Assistance: GitHub Copilot provided partial code suggestions for DNA metric functions.
-
 """
 Nucleic Acid Sequence Metrics Module
 
