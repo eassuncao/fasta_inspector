@@ -1,5 +1,3 @@
-# AI Assistance: GitHub Copilot contributed utility function suggestions.
-
 """
 Utility Functions Module
 
