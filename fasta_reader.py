@@ -1,5 +1,3 @@
-# AI Assistance: GitHub Copilot helpful in generating this module.
-
 """
 FASTA File Reader Module
 
