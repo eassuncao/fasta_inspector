@@ -143,5 +143,7 @@ This project was created for academic purposes (COMP625 - Algorithms for Bioinfo
 ## Author
 
 Erich Assunção
-Athabasca University  
+
+Athabasca University
+
 December 2025
