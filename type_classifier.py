@@ -1,5 +1,3 @@
-# AI Assistance: GitHub Copilot helped generate this classification module.
-
 """
 Sequence Type Classification Module
 
