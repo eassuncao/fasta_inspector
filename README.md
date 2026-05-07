@@ -92,11 +92,7 @@ The project includes 188 comprehensive tests covering all modules.
 ## Development Notes
 
 ### AI Assistance
-This project was developed with AI assistance (GitHub Copilot) for:
-- Code implementation and documentation
-- Test suite creation (pytest-based)
-- Code refactoring and optimization
-- Documentation generation
+- Developed with AI-assisted tooling (GitHub Copilot) alongside independent implementation, testing, refactoring, and documentation work.
 
 ### Version Control
 The project uses Git for version control. Key development milestones:
@@ -104,8 +100,6 @@ The project uses Git for version control. Key development milestones:
 - Comprehensive pytest test suite (188 tests)
 - Documentation and code cleanup
 - README finalization
-
-## Limitations and Next Steps
 
 ### Current Limitations
 - **Classification Threshold**: Uses a fixed 90% nucleotide composition threshold; ambiguous sequences (85-95%) may be misclassified
