@@ -1,5 +1,3 @@
-# AI Assistance: GitHub Copilot assisted in generating protein metric functions.
-
 """
 Protein Sequence Metrics Module
 
