@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# AI Assistance: GitHub Copilot used for scaffolding and function orchestration.
 
 """
 FASTA Inspector - Bioinformatics Sequence Analysis Tool
